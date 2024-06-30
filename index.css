@@ -36,6 +36,7 @@ h2 {
   cursor: pointer;
   font-size: 16px;
   margin: 5px;
+  line-height: 1.6;
 }
 .btn:hover {
   background-color: #45a049;
@@ -52,6 +53,7 @@ form {
 label {
   display: block;
   margin-bottom: 5px;
+  max-width: fit-content;
 }
 input[type="text"],
 select,

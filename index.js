@@ -6,7 +6,8 @@ import {
   push,
   onValue,
   remove,
-  set
+  set,
+  update,
 } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-database.js";
 // TODO: Add SDKs for Firebase products that you want to use
 // https://firebase.google.com/docs/web/setup#available-libraries
@@ -35,6 +36,8 @@ let isActive = false;
 let startTime;
 let timerInterval;
 let activities = [];
+
+let editingActivityId = null;
 
 const startBtn = document.getElementById("start-btn");
 const stopBtn = document.getElementById("stop-btn");
@@ -88,17 +91,21 @@ async function logActivity(event) {
     category: event.target.category.value,
     details: event.target.details.value,
   };
-  const activityId = await saveActivity(newActivity);
-  if (activityId) {
-    newActivity.id = activityId;
-    // activities.push(newActivity);
-    activityForm.style.display = "none";
-    startBtn.style.display = "inline-block";
-    timerDisplay.textContent = "00:00:00";
-    event.target.reset();
-    // renderActivities();
-
+  if (editingActivityId) {
+    await updateActivity(event);
+  } else {
+    const activityId = await saveActivity(newActivity);
+    if (activityId) {
+      newActivity.id = activityId;
+      activities.push(newActivity);
+      activityForm.style.display = "none";
+      startBtn.style.display = "inline-block";
+      timerDisplay.textContent = "00:00:00";
+      event.target.reset();
+    }
   }
+  resetForm();
+  renderActivities();
 }
 
 function reorderActivityObject(activity) {
@@ -129,26 +136,113 @@ function renderActivities() {
       cell.textContent = value;
     });
 
-    // Add delete button
-    const deleteCell = row.insertCell();
+    // Add Actions cell with both Edit and Delete buttons
+    const actionsCell = row.insertCell();
+
+    // Create Edit button
+    const editButton = document.createElement("button");
+    editButton.textContent = "Edit";
+    editButton.onclick = () => editActivity(activity.id);
+    editButton.className = "btn btn-edit"; // Add classes for styling
+
+    // Create Delete button
     const deleteButton = document.createElement("button");
     deleteButton.textContent = "Delete";
     deleteButton.onclick = () => deleteActivity(activity.id);
-    deleteCell.appendChild(deleteButton);
+    deleteButton.className = "btn btn-delete"; // Add classes for styling
+
+    // Append both buttons to the Actions cell
+    actionsCell.appendChild(editButton);
+    actionsCell.appendChild(deleteButton);
+
+    // // Add edit button
+    // const editCell = row.insertCell();
+    // const editButton = document.createElement('button');
+    // editButton.textContent = 'Edit';
+    // editButton.onclick = () => editActivity(activity.id);
+    // editCell.appendChild(editButton);
+
+    // // Add delete button
+    // const deleteCell = row.insertCell();
+    // const deleteButton = document.createElement("button");
+    // deleteButton.textContent = "Delete";
+    // deleteButton.onclick = () => deleteActivity(activity.id);
+    // deleteCell.appendChild(deleteButton);
   });
+}
+
+function editActivity(activityId) {
+  const activity = activities.find((a) => a.id === activityId);
+  if (activity) {
+    editingActivityId = activityId;
+    document.getElementById("activity").value = activity.activity;
+    document.getElementById("category").value = activity.category;
+    document.getElementById("details").value = activity.details;
+
+    // Change form submit button text
+    const submitButton = activityForm.querySelector('button[type="submit"]');
+    submitButton.textContent = "Update Activity";
+
+    activityForm.style.display = "block";
+    startBtn.style.display = "none";
+    stopBtn.style.display = "none";
+    timerDisplay.textContent = activity.duration;
+  }
+}
+
+async function updateActivity(event) {
+  event.preventDefault();
+  const updatedActivity = {
+    date: new Date().toLocaleString(),
+    activity: event.target.activity.value,
+    duration: timerDisplay.textContent,
+    category: event.target.category.value,
+    details: event.target.details.value,
+  };
+
+  const db = getDatabase();
+  const activityRef = ref(db, `activities/${editingActivityId}`);
+
+  try {
+    await update(activityRef, updatedActivity);
+    console.log("Activity updated successfully");
+
+    // Update local array
+    const index = activities.findIndex((a) => a.id === editingActivityId);
+    if (index !== -1) {
+      activities[index] = { ...updatedActivity, id: editingActivityId };
+    }
+
+    renderActivities();
+    resetForm();
+  } catch (error) {
+    console.error("Error updating activity: ", error);
+  }
+}
+
+function resetForm() {
+  editingActivityId = null;
+  activityForm.reset();
+  const submitButton = activityForm.querySelector('button[type="submit"]');
+  submitButton.textContent = "Log Activity";
+  activityForm.style.display = "none";
+  startBtn.style.display = "inline-block";
+  timerDisplay.textContent = "00:00:00";
 }
 
 function saveActivity(activity) {
   const activitiesRef = ref(database, "activities");
   const newActivityRef = push(activitiesRef);
 
-  return set(newActivityRef, activity).then(() => {
-    console.log("Activity saved successfully", activity);
-    return newActivityRef.key;
-  }).catch((error) => {
-    console.error("Error saving activity: ", error);
-    return null;
-  });
+  return set(newActivityRef, activity)
+    .then(() => {
+      console.log("Activity saved successfully", activity);
+      return newActivityRef.key;
+    })
+    .catch((error) => {
+      console.error("Error saving activity: ", error);
+      return null;
+    });
 }
 
 function loadActivities() {

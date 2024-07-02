@@ -1,3 +1,41 @@
+#activities-table th {
+  text-align: center;
+  vertical-align: middle;
+  padding: 10px;
+  background-color: #f2f2f2;
+  font-weight: bold;
+}
+
+/* Optional: Center-align content in all table cells for consistency */
+#activities-table td {
+  text-align: center;
+  vertical-align: middle;
+  padding: 8px;
+}
+
+/* If you want to left-align the text in the 'Details' column */
+/* #activities-table td:nth-child(5) {
+  text-align: left;
+} */
+
+/* Styling for the entire table to make it look more polished */
+#activities-table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-bottom: 20px;
+}
+
+#activities-table,
+#activities-table th,
+#activities-table td {
+  border: 1px solid #ddd;
+}
+
+/* Hover effect for table rows */
+#activities-table tbody tr:hover {
+  background-color: #f5f5f5;
+}
+
 body {
   font-family: Arial, sans-serif;
   line-height: 1.6;
@@ -47,6 +85,25 @@ h2 {
 #stop-btn:hover {
   background-color: #d32f2f;
 }
+
+.btn-edit {
+  background-color: #4caf50;
+  color: white;
+}
+
+.btn-edit:hover {
+  background-color: #45a049;
+}
+
+.btn-delete {
+  background-color: #f44336;
+  color: white;
+}
+
+.btn-delete:hover {
+  background-color: #d32f2f;
+}
+
 form {
   margin-top: 20px;
 }
